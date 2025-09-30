@@ -1,12 +1,15 @@
 import { ConfigService } from '@nestjs/config';
 
 export interface ApiConfig {
+  s3: {
+    region: string;
+    access_key: string;
+    secret_key: string;
+  },
   gohighlevel: {
-    apiKey: string;
+    token: string;
     baseUrl: string;
-    timeout: number;
-    retryAttempts: number;
-    retryDelay: number;
+    location_id: string;
   };
   pos: {
     square: {
@@ -37,12 +40,15 @@ export interface ApiConfig {
 }
 
 export const getApiConfig = (configService: ConfigService): ApiConfig => ({
+  s3: {
+    region: configService.get<string>('S3_REGION') || '',
+    access_key: configService.get<string>('S3_ACCESS_KEY') || '',
+    secret_key: configService.get<string>('S3_SECRET_KEY') || '',
+  },
   gohighlevel: {
-    apiKey: configService.get<string>('GOHIGHLEVEL_API_KEY') || '',
-    baseUrl: configService.get<string>('GOHIGHLEVEL_BASE_URL') || 'https://rest.gohighlevel.com/v1',
-    timeout: parseInt(configService.get<string>('GOHIGHLEVEL_TIMEOUT') || '30000', 10),
-    retryAttempts: parseInt(configService.get<string>('GOHIGHLEVEL_RETRY_ATTEMPTS') || '3', 10),
-    retryDelay: parseInt(configService.get<string>('GOHIGHLEVEL_RETRY_DELAY') || '1000', 10),
+    token: configService.get<string>('GOHIGHLEVEL_PRIVATE_TOKEN') || '',
+    baseUrl: configService.get<string>('GOHIGHLEVEL_BASE_URL') || '',
+    location_id: configService.get<string>('GOHIGHLEVEL_LOCATION_ID') || '',
   },
   pos: {
     square: {

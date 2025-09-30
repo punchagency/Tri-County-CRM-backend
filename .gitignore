@@ -36,7 +36,7 @@ lerna-debug.log*
 
 
 # developer private documents
-private.*
+private*
 
 # Environment variables
 .env.development

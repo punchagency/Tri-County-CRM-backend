@@ -1,34 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Res } from '@nestjs/common';
 import { GohighlevelService } from './gohighlevel.service';
 import { CreateGohighlevelDto } from './dto/create-gohighlevel.dto';
 import { UpdateGohighlevelDto } from './dto/update-gohighlevel.dto';
+import { Public } from '@src/utils/decorators/auth.decorators';
+import { Request, Response } from 'express';
 
 @Controller('gohighlevel')
 export class GohighlevelController {
-  constructor(private readonly gohighlevelService: GohighlevelService) {}
+  constructor(private readonly gohighlevelService: GohighlevelService) { }
 
-  @Post()
-  create(@Body() createGohighlevelDto: CreateGohighlevelDto) {
-    return this.gohighlevelService.create(createGohighlevelDto);
-  }
 
-  @Get()
-  findAll() {
-    return this.gohighlevelService.findAll();
-  }
+  @Public()
+  @Post('webhook')
+  async webhook(@Req() req: Request, @Res() response: Response) {
+    await this.gohighlevelService.conversationHandler(req);
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.gohighlevelService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGohighlevelDto: UpdateGohighlevelDto) {
-    return this.gohighlevelService.update(+id, updateGohighlevelDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.gohighlevelService.remove(+id);
+    return response.status(200).send('OK');
   }
 }
