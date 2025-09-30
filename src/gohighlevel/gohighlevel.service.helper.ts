@@ -48,6 +48,13 @@ export class GohighlevelServiceHelper {
   return formatterConversion as Array<GohighlevelConversion>
  }
 
+ /**
+  * Find and update message with attachment
+  * NOTE: This is important because the gohighlevel webhook does not return the attachment reference
+  * @param messages - Array of conversation messages
+  * @param currentMessage - Current message
+  * @returns Array of conversation messages with attachment
+  */
  findAndUpdateMessageWithAttachment(messages: Array<ConversationMessage>, currentMessage: any) {
   const { contactId, conversationId, dateAdded, status, attachments } = currentMessage;
 
