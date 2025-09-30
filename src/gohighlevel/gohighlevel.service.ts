@@ -135,9 +135,12 @@ export class GohighlevelService {
           // call the list of messages because the webhook does not return the reference of the message
           this.conversationMessages.getMessages(body.conversationId)
         ]);
+        console.log('conversationMessageDetails', conversationMessageDetails);
+        console.log('conversationDetailsForMessage', conversationDetailsForMessage);
+        console.log('body', body);
 
 
-        await this.saveConversationMessages({
+        this.saveConversationMessages({
           conversation: conversationDetailsForMessage,
           messages: this.gohighlevelServiceHelper.findAndUpdateMessageWithAttachment(conversationMessageDetails.messages, body),
           last_message_id: conversationMessageDetails.last_message_id
