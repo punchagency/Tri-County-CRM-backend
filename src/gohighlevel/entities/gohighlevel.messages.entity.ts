@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { GohighlevelConversion } from './gohighlevel.conversion.entity';
 
 
@@ -25,11 +25,6 @@ export class GohighlevelConversionMessage {
   @Column({ type: "json", default: null })
   details: object;
 
-  @ManyToOne(() => GohighlevelConversion, (conversation) => conversation, {
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-  })
-  conversation: GohighlevelConversion;
 
   @CreateDateColumn()
   created_at: Date;
@@ -37,4 +32,10 @@ export class GohighlevelConversionMessage {
   @UpdateDateColumn()
   updated_at: Date;
   
+  @ManyToOne(() => GohighlevelConversion, (conversation) => conversation.messages, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
+  @JoinColumn({ referencedColumnName:"id" })
+  conversation: GohighlevelConversion;
 }

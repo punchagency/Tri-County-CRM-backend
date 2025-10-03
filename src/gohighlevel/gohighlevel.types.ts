@@ -95,3 +95,46 @@ export interface ConversationMessageDetailResponse {
   conversationProviderId: string,
   chatWidgetId: string,
 }
+
+
+export interface Contact {
+  type: string,
+  locationId: string,
+  id: string,
+  address1: string,
+  city: string,
+  state: string,
+  companyName: string,
+  country: string,
+  source: string,
+  dateAdded: string,
+  dateOfBirth: string,
+  dnd: boolean,
+  email: string,
+  name: string,
+  firstName: string,
+  lastName: string,
+  phone: string,
+  postalCode: string,
+  tags: Array<string>,
+  website: string,
+  attachments: Array<string>,
+  assignedTo: string,
+  customFields: Array<
+    {
+      id: string,
+      value: string
+    }
+  >,
+  dndSettings: object,
+}
+
+
+export enum ConversationMessageType {
+  INBOUND = "InboundMessage",
+  OUTBOUND = "OutboundMessage",
+  CONTACT_CREATE = "ContactCreate",
+  CONTACT_DELETE = "ContactDelete",
+  CONTACT_DND_UPDATE = "ContactDndUpdate",
+  CONTACT_TAG_UPDATE = "ContactTagUpdate"
+}

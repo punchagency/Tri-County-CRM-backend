@@ -11,9 +11,9 @@ export class GohighlevelController {
 
 
   @Public()
-  @Post('webhook')
+  @Post('webhooks')
   async webhook(@Req() req: Request, @Res() response: Response) {
-    await this.gohighlevelService.conversationHandler(req);
+    await this.gohighlevelService.webhookHandler(req);
 
     return response.status(200).send('OK');
   }

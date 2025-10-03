@@ -1,4 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { GohighlevelContact } from './gohighlevel.contact.entity';
+import { GohighlevelConversionMessage } from './gohighlevel.messages.entity';
 
 
 @Entity({ name: 'ghl_conversations' })
@@ -11,9 +13,6 @@ export class GohighlevelConversion {
 
   @Column()
   contact_ref: string;
-
-  // @Column({ nullable: true })
-  // last_date_update: number
 
   @Column()
   last_message_direction: string
@@ -33,4 +32,16 @@ export class GohighlevelConversion {
   @UpdateDateColumn()
   updated_at: Date;
 
+  @OneToOne(() => GohighlevelContact, (contact) => contact.conversion, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+  })
+  @JoinColumn({ referencedColumnName:"id"})
+  contact: GohighlevelContact;
+
+  @OneToMany(() => GohighlevelConversionMessage, (messages) => messages.conversation, {
+    cascade: true,
+    eager: true,
+  })
+  messages: Array<GohighlevelConversionMessage>
 }
