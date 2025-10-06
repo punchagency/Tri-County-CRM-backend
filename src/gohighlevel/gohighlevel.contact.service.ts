@@ -4,34 +4,39 @@ import { Repository } from 'typeorm';
 
 import { ConversationMessageType } from './gohighlevel.types';
 import { GohighlevelContact } from './entities/gohighlevel.contact.entity';
+import { GohighlevelRepo } from './gohighlevel.repo';
 
 @Injectable()
 export class GohighlevelContactService {
+  private gohighlevelRepo: GohighlevelRepo
   constructor(
     @InjectRepository(GohighlevelContact)
     private readonly gohighlevelContactRepository: Repository<GohighlevelContact>,
-  ) {}
-
-  private async saveContact({ mode, reference_values, update_values = {} }: { mode: "save" | "update" | "delete", reference_values: string | object, update_values?: object }) {
-
-    if (mode === "update") {
-      this.gohighlevelContactRepository[mode](reference_values, update_values)
-    } else {
-      this.gohighlevelContactRepository[mode](reference_values)
-    }
+  ) {
+    this.gohighlevelRepo = new GohighlevelRepo({ gohighlevelContactRepository })
   }
+
+  // private async saveContact({ mode, reference_values, update_values = {} }: { mode: "save" | "update" | "delete", reference_values: string | object, update_values?: object }) {
+
+  //   if (mode === "update") {
+  //     this.gohighlevelContactRepository[mode](reference_values, update_values)
+  //   } else {
+  //     this.gohighlevelContactRepository[mode](reference_values)
+  //   }
+  // }
 
   private async getContactActionTag(body: any) {
     // checks for operations
     const contactExist = await this.gohighlevelContactRepository.findOneBy({ contact_ref: body.id });
-    const isNewContact = !contactExist && body.type === ConversationMessageType.CONTACT_CREATE
+    const isNewContact = !contactExist && (body.type === ConversationMessageType.CONTACT_CREATE || body.type === ConversationMessageType.CONTACT_CREATE_OR_UPDATE)
+    const isExistContact = contactExist && body.type === ConversationMessageType.CONTACT_CREATE_OR_UPDATE
     const isContactForUpdate = [
       ConversationMessageType.CONTACT_DND_UPDATE,
       ConversationMessageType.CONTACT_TAG_UPDATE
     ].includes(body.type);
     const isContactForDelete = body.type === ConversationMessageType.CONTACT_DELETE
 
-    const tag = isNewContact ? "save" : isContactForUpdate ? "update" : isContactForDelete ? "delete" : '';
+    const tag = isNewContact ? "save" : (isContactForUpdate || isExistContact) ? "update" : isContactForDelete ? "delete" : '';
 
     return {
       contact: contactExist,
@@ -81,6 +86,7 @@ export class GohighlevelContactService {
         ConversationMessageType.CONTACT_DELETE,
         ConversationMessageType.CONTACT_DND_UPDATE,
         ConversationMessageType.CONTACT_TAG_UPDATE,
+        ConversationMessageType.CONTACT_CREATE_OR_UPDATE,
       ];
 
       if (!allowedTypes.includes(body.type)) {
@@ -92,7 +98,7 @@ export class GohighlevelContactService {
       const selectedPayload = this.getContactPayload(body, contact);
       const payload = selectedPayload[tag];
 
-      payload && this.saveContact(payload)
+      payload && this.gohighlevelRepo.saveOrUpdateContact(payload)
     } catch (error) {
       throw new BadRequestException(error.message);
     }

@@ -144,4 +144,16 @@ export class Conversations {
       throw new BadRequestException(`getConversationDetail Error: ${error.message}`);
     }
   }
+
+  async getConversationDetailByContactId(contactId: string): Promise<Conversation> {
+    try{
+      const api = GohighlevelServiceApi.api({ gohighlevel: this.gohighlevel, contactId });
+
+      const response = await makeCallWithAxios(api.single_conversation_request_detail_contact_id);
+
+      return response.data?.conversations?.[0] as Conversation;
+    } catch(error) {
+      throw new BadRequestException(`getConversationDetail Error: ${error.message}`);
+    }
+  }
 }

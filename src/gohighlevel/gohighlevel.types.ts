@@ -130,11 +130,19 @@ export interface Contact {
 }
 
 
+export enum ContactType {
+  CUSTOMER = "customer",
+  LEAD = "lead"
+}
+
 export enum ConversationMessageType {
   INBOUND = "InboundMessage",
   OUTBOUND = "OutboundMessage",
   CONTACT_CREATE = "ContactCreate",
   CONTACT_DELETE = "ContactDelete",
   CONTACT_DND_UPDATE = "ContactDndUpdate",
-  CONTACT_TAG_UPDATE = "ContactTagUpdate"
+  CONTACT_TAG_UPDATE = "ContactTagUpdate",
+  CONTACT_CREATE_OR_UPDATE = "ContactCreateOrUpdate",
+  CONTACT_CUSTOMER = ContactType.CUSTOMER,
+  CONTACT_LEAD = ContactType.LEAD,
 }

@@ -1,7 +1,7 @@
 import { ApiConfig } from '@src/config';
 
 export class GohighlevelServiceApi {
-  static api({ gohighlevel, conversationId, messageId }: { gohighlevel: ApiConfig['gohighlevel'], conversationId?: string, messageId?: string }) {
+  static api({ gohighlevel, conversationId, messageId, contactId }: { gohighlevel: ApiConfig['gohighlevel'], conversationId?: string, messageId?: string, contactId?: string }) {
 
     return {
       call_conversations_request_inbound: {
@@ -64,6 +64,16 @@ export class GohighlevelServiceApi {
           'Authorization': `Bearer ${gohighlevel.token}`
         }
       },
+      single_conversation_request_detail_contact_id: {
+        token: gohighlevel.token,
+        method: 'GET',
+        url: `${gohighlevel.baseUrl}/conversations/search?locationId=${gohighlevel.location_id}&contactId=${contactId}`,
+        headers: {
+          'Accept': 'application/json',
+          'Version': '2021-04-15',
+          'Authorization': `Bearer ${gohighlevel.token}`
+        }
+      },
       single_message_request_detail: {
         token: gohighlevel.token,
         method: 'GET',
@@ -80,6 +90,16 @@ export class GohighlevelServiceApi {
         url: `${gohighlevel.baseUrl}/conversations/messages/${messageId}/locations/${gohighlevel.location_id}/recording`,
         headers: {
           'content-type': "audio/x-wav",
+          'Version': '2021-04-15',
+          'Authorization': `Bearer ${gohighlevel.token}`
+        }
+      },
+      single_contact_request_detail: {
+        token: gohighlevel.token,
+        method: 'GET',
+        url: `${gohighlevel.baseUrl}/contacts/${contactId}`,
+        headers: {
+          'Accept': 'application/json',
           'Version': '2021-04-15',
           'Authorization': `Bearer ${gohighlevel.token}`
         }

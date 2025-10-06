@@ -12,13 +12,14 @@ import { Conversation, ConversationMessage, ConversationMessageType } from './go
 import { GohighlevelConversionMessage } from './entities/gohighlevel.messages.entity';
 import { GohighlevelServiceHelper } from './gohighlevel.service.helper';
 import { GohighlevelContact } from './entities/gohighlevel.contact.entity';
+import { GohighlevelRepo } from './gohighlevel.repo';
 
 
 @Injectable()
 export class GohighlevelConversationService {
   private conversations: Conversations;
   private conversationMessages: ConversationMessages;
-  private gohighlevelServiceHelper: GohighlevelServiceHelper;
+  private gohighlevelRepo: GohighlevelRepo
 
 
   constructor(
@@ -34,129 +35,65 @@ export class GohighlevelConversationService {
 
     this.conversations = new Conversations({ gohighlevel: config.api.gohighlevel });
     this.conversationMessages = new ConversationMessages({ gohighlevel: config.api.gohighlevel, awsS3Bucket: config.api.s3 });
-    this.gohighlevelServiceHelper = new GohighlevelServiceHelper();
-  }
-
-  private async hasNewMessageInConversation({ conversation, messages_count }: { conversation: GohighlevelConversion, messages_count: number }) {
-
-    const existingConversation = await this.gohighlevelConversionRepository.findOne({
-      where: {
-        conversation_ref: conversation.conversation_ref,
-      }
-    });
-    const last_messages_count = existingConversation?.last_messages_count
-
-
-    return messages_count !== last_messages_count
-  }
-
-  private async saveOrUpdateConversion(conversation: GohighlevelConversion) {
-
-    if (!conversation) {
-      return
-    }
-
-    const conversation_ref = conversation.conversation_ref
-    const [existingConversation, contact] = await Promise.all([
-      this.gohighlevelConversionRepository.findOneBy({
-        conversation_ref,
-      }),
-      this.gohighlevelContactRepository.findOneBy({ contact_ref: conversation.contact_ref })
-    ]);
-
-
-    if (existingConversation) {
-      return this.gohighlevelConversionRepository.update({ conversation_ref }, conversation);
-    }
-    return this.gohighlevelConversionRepository.save({ ...conversation, contact: { id: contact.id } });
-  }
-
-  private async saveNewMesssageOnly(messages: Array<GohighlevelConversionMessage>, conversation_ref: string,
-  ) {
-
-    if (!messages?.length) {
-      return
-    }
-
-    const [conversation, existingmessages] = await Promise.all([
-      this.gohighlevelConversionRepository.findOneBy({
-        conversation_ref,
-      }),
-      this.gohighlevelConversionMessageRepository.find({
-        where: {
-          conversation_ref: conversation_ref,
-        }
-      })
-    ])
-    const messageIds = existingmessages.map(item => item.message_ref)
-
-    await batchProcessor(messages, async (message, i) => {
-      // check if messsage is new
-      if (!messageIds.includes(message.message_ref)) {
-        this.gohighlevelConversionMessageRepository.save({ ...message, conversation: { id: conversation?.id } })
-      }
+    this.gohighlevelRepo = new GohighlevelRepo({
+      gohighlevelContactRepository,
+      gohighlevelConversionMessageRepository,
+      gohighlevelConversionRepository
     })
-
   }
 
-  private async saveConversationMessages({ conversation, last_message_id, messages }: { messages?: Array<ConversationMessage>, last_message_id: string, conversation?: Conversation }) {
-    try {
-
-      const [formattedConversions = [], formattedConversationMessages = []] = await Promise.all([
-        this.gohighlevelServiceHelper.formatterConversation([{ ...conversation, last_messages_count: messages?.length || 0 }], last_message_id),
-        this.gohighlevelServiceHelper.formatterConversationMessages(messages)
-      ]);
-
-      // formatted conversion is only constantly a single conversion 
-      const conversationFormatted = formattedConversions?.[0]
-      const conversationMessagesFormatted = formattedConversationMessages;
-      const messages_count = conversationMessagesFormatted.length
-
-      // check if the conversation have new messages
-      const hasNewMassage = await this.hasNewMessageInConversation({
-        conversation: conversationFormatted,
-        messages_count
-      })
-
-      if (hasNewMassage) {
-        // save conversation messages to database
-        await this.saveOrUpdateConversion(conversationFormatted);// conversation should save before messages based on relationship
-        this.saveNewMesssageOnly(formattedConversationMessages, conversationFormatted.conversation_ref);
-      }
-
-    } catch (error) {
-      throw new BadRequestException(`Error: ${error.message}`);
-    }
-
-  }
-
-  async conversationHandle(body: any) {
+  async conversationHandle(body: { type: ConversationMessageType, conversationId: string, contact_id_from_db: string }) {
     try {
       const allowedTypes = [
         ConversationMessageType.INBOUND,
         ConversationMessageType.OUTBOUND
       ];
 
-      if (!allowedTypes.includes(body.type)) {
+      if (!allowedTypes.includes(body.type) || !body.conversationId || !body.contact_id_from_db) {
         return;
       }
 
-      const [conversationDetailsForMessage, conversationMessageDetails] = await Promise.all([
-        this.conversations.getConversationDetail(body.conversationId),
+      const conversationDetails = await this.conversations.getConversationDetail(body.conversationId);
 
-        // call the list of messages because the webhook does not return the reference of the message
-        this.conversationMessages.getMessages(body.conversationId)
-      ]);
+      // awaiting this process is necess for squential execution when in-use next to message handle
+      return await this.gohighlevelRepo.saveOrUpdateConversion({ ...conversationDetails, contact_id_from_db: body.contact_id_from_db });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
 
+  async meassageHandle(body: {
+    type: ConversationMessageType,
+    conversationId: string,
+    conversation_id_from_db: string
+  }) {
+    try {
+      const allowedTypes = [
+        ConversationMessageType.INBOUND,
+        ConversationMessageType.OUTBOUND
+      ];
 
-      this.saveConversationMessages({
-        conversation: conversationDetailsForMessage,
-        messages: this.gohighlevelServiceHelper.findAndUpdateMessageWithAttachment(conversationMessageDetails.messages, body),
-        last_message_id: conversationMessageDetails.last_message_id
-      });
+      if (!allowedTypes.includes(body.type) || !body.conversationId || !body.conversation_id_from_db) {
+        return;
+      }
+
+      const conversationMessages = await this.conversationMessages.getMessages(body.conversationId)
+
+      return await this.gohighlevelRepo.saveNewMesssageOnly({
+        conversation_id_from_db: body.conversation_id_from_db,
+        message_array_or_object: conversationMessages
+      })
 
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  async conversationAndMessageHandle(payload) {
+    const contact = payload?.contact_id_from_db ? payload : await this.gohighlevelContactRepository.findOneBy({ contact_ref: payload.contactId })
+
+    // the conversion should process first
+    const savedConversation = await this.conversationHandle({ ...payload, contact_id_from_db: payload?.contact_id_from_db || contact.id });
+    this.meassageHandle({ ...payload, conversation_id_from_db: savedConversation.id });
   }
 }

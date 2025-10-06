@@ -32,7 +32,7 @@ export class GohighlevelConversion {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @OneToOne(() => GohighlevelContact, (contact) => contact.conversion, {
+  @OneToOne(() => GohighlevelContact, (contact) => contact.conversation, {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   })

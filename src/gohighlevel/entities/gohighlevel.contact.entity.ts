@@ -35,6 +35,6 @@ export class GohighlevelContact {
     cascade: true,
     eager: true,
   })
-  conversion: GohighlevelConversion
+  conversation: GohighlevelConversion
 
 }
