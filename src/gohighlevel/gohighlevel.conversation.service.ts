@@ -1,22 +1,20 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { getAppConfig } from '@src/config';
-import { batchProcessor } from '@src/utils/batchProcessor';
-
 import { GohighlevelConversion } from './entities/gohighlevel.conversion.entity';
 import { ConversationMessages, Conversations } from './gohighlevel.conversation';
-import { Conversation, ConversationMessage, ConversationMessageType } from './gohighlevel.types';
+import { ConversationMessageType } from './gohighlevel.types';
 import { GohighlevelConversionMessage } from './entities/gohighlevel.messages.entity';
-import { GohighlevelServiceHelper } from './gohighlevel.service.helper';
 import { GohighlevelContact } from './entities/gohighlevel.contact.entity';
 import { GohighlevelRepo } from './gohighlevel.repo';
 
 
 @Injectable()
 export class GohighlevelConversationService {
+  private logger = new Logger(GohighlevelConversationService.name)
   private conversations: Conversations;
   private conversationMessages: ConversationMessages;
   private gohighlevelRepo: GohighlevelRepo
@@ -90,10 +88,14 @@ export class GohighlevelConversationService {
   }
 
   async conversationAndMessageHandle(payload) {
+    try{
     const contact = payload?.contact_id_from_db ? payload : await this.gohighlevelContactRepository.findOneBy({ contact_ref: payload.contactId })
 
     // the conversion should process first
     const savedConversation = await this.conversationHandle({ ...payload, contact_id_from_db: payload?.contact_id_from_db || contact.id });
     this.meassageHandle({ ...payload, conversation_id_from_db: savedConversation.id });
+  } catch(error) {
+      this.logger.log(error)
+  }
   }
 }
