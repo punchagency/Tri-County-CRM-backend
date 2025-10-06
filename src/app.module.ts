@@ -8,9 +8,10 @@ import { JwtAuthGuard } from './utils/guards/auth.guard';
 import { GohighlevelModule } from './gohighlevel/gohighlevel.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { SquareModule } from './square/square.module';
 
 @Module({
-  imports: [SecurityModule, GohighlevelModule, AuthModule, UserModule],
+  imports: [SecurityModule, GohighlevelModule, AuthModule, UserModule, SquareModule],
   controllers: [AppController],
   providers: [
     AppService,
