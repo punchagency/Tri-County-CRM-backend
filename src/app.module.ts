@@ -9,9 +9,10 @@ import { GohighlevelModule } from './gohighlevel/gohighlevel.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { SquareModule } from './square/square.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [SecurityModule, GohighlevelModule, AuthModule, UserModule, SquareModule],
+  imports: [SecurityModule, GohighlevelModule, AuthModule, UserModule, SquareModule, MailModule],
   controllers: [AppController],
   providers: [
     AppService,

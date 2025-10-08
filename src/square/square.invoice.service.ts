@@ -4,6 +4,7 @@ import { SquareRepo } from './square.repo';
 import { SquareInvoice } from './entities/square.invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MailService, TemplateName } from '@src/mail/mail.service';
 
 @Injectable()
 export class SquareInvoiceService {
@@ -12,7 +13,8 @@ export class SquareInvoiceService {
 
   constructor(
     @InjectRepository(SquareInvoice)
-    private squareInvoiceRepository: Repository<SquareInvoice>
+    private squareInvoiceRepository: Repository<SquareInvoice>,
+    private mailService: MailService
   ) {
     this.squareRepo = new SquareRepo({ squareInvoiceRepository })
   }
@@ -25,7 +27,20 @@ export class SquareInvoiceService {
 
     const typeNanme = body.type.split(".").pop()
     const invoiceinformation = { ...body.data.object, type: typeNanme }
-    return this.squareRepo.saveOrUpdateForInvoice(invoiceinformation)
+
+    // saving record and dispatching email to customer
+    const [squareSavedData,] = await Promise.all([
+      this.squareRepo.saveOrUpdateForInvoice(invoiceinformation),
+      this.mailService.dispatch({
+        subject:"Your Invoice - QuantuumImpact",
+        receipentEmailLocationInTemplateInput: 'primary_recipient.email_address',
+        templateInput: invoiceinformation,
+        temelateName: TemplateName.SQUARE
+      })
+    ])
+
+    return squareSavedData
+    // return this.squareRepo.saveOrUpdateForInvoice(invoiceinformation)
   }
 
   async onPaymentMade(body: any) {

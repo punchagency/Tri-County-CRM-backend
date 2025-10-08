@@ -9,16 +9,19 @@ import { SquarePayment } from './entities/square.payment.entity';
 import { SquareCustomerService } from './square.customer.service';
 import { SquareInvoiceService } from './square.invoice.service';
 import { SquarePaymentService } from './square.payment.service';
+import { MailModule } from '@src/mail/mail.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([
     SquareCustomer,
     SquareInvoice,
     SquarePayment
-  ])],
+  ]),
+    MailModule
+  ],
   controllers: [SquareController],
   providers: [
-    SquareService, 
+    SquareService,
     SquareCustomerService,
     SquareInvoiceService,
     SquarePaymentService
