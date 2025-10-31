@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -8,6 +8,7 @@ import { GohighlevelRepo } from './gohighlevel.repo';
 
 @Injectable()
 export class GohighlevelContactService {
+  private logger = new Logger(GohighlevelContactService.name)
   private gohighlevelRepo: GohighlevelRepo
   constructor(
     @InjectRepository(GohighlevelContact)
@@ -100,7 +101,7 @@ export class GohighlevelContactService {
 
       payload && this.gohighlevelRepo.saveOrUpdateContact(payload)
     } catch (error) {
-      throw new BadRequestException(error.message);
+      this.logger.log(error.message);
     }
 
   }

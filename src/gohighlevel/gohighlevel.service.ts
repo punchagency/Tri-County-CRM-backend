@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Request } from 'express';
 import { createVerify } from "crypto";
 
@@ -14,6 +14,7 @@ import { Conversations } from './gohighlevel.conversation';
 
 @Injectable()
 export class GohighlevelService {
+  private logger = new Logger(GohighlevelService.name)
   private gohighlevelServiceHelper: GohighlevelServiceHelper;
   private apiConfig: ApiConfig;
   private contactApi: Contacts;
@@ -67,15 +68,13 @@ export class GohighlevelService {
 
 
   async webhookHandler(req: Request) {
-    console.log("body", req.body)
-    // console.log("headers", req.headers)
+    this.logger.log('📦 Received gohighlevel Webhook: ' + req?.body?.type);
 
     // signature validation
     const isValidSignature = this.webhookSignatureHandler(req)
     if (!isValidSignature || !this.gohighlevelServiceHelper.selectedAction(req.body.type)) {
       return
     }
-    console.log("isValidSignature", isValidSignature)
 
     // contact handle should always come before the conversation handle based on relationship
     const adapterForContact = new GohighlevelAdapter(this.contactApi)
